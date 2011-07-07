@@ -1,12 +1,20 @@
 module dataf.propspecs;
 
-import std.traits, std.typetuple;
+import std.algorithm, std.traits, std.typetuple;
 
 struct PropSpecs(T) {
   enum names = propNames!T();
   alias propTypes!(T, names) Types;
   enum readMask = propReadable!(T, names, Types)();
   enum writeMask = propWriteable!(T, names, Types)();
+
+  static sizediff_t indexOf(string name)() {
+    return names.countUntil(name);
+  }
+
+  template typeOf(string name) {
+    alias Types[indexOf!(name)()] typeOf;
+  }
 
   static assert(names.length == Types.length);
   static assert(Types.length == readMask.length);
