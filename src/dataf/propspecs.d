@@ -1,6 +1,6 @@
 module dataf.propspecs;
 
-import std.algorithm, std.traits, std.typetuple;
+import std.algorithm, std.metastrings, std.traits, std.typetuple;
 
 struct PropSpecs(T) {
   enum names = propNames!T();
@@ -28,9 +28,11 @@ alias FunctionAttribute FA;
 string[] propNames(T)() {
   string[] res;
   foreach(name; __traits(allMembers, T)) {
-    static if (is(FunctionTypeOf!(__traits(getMember, T, name)) FT))
-      static if (functionAttributes!(FT) & FA.PROPERTY)
-        res ~= name;
+    static if (name != "this") {
+      static if (mixin(Format!(q{ is(FunctionTypeOf!(T.%s) FT) }, name)))
+        static if (functionAttributes!(FT) & FA.PROPERTY)
+          res ~= name;
+    }
   }
   return res;
 }
@@ -46,7 +48,7 @@ bool[] propReadable(T, alias names, Types...)() {
   bool[] res;
   res.length = Types.length;
   foreach(i, PT; Types) {
-    static if (is(typeof(__traits(getMember, T, names[i])) : PT))
+    static if (is(typeof(__traits(getMember, T.init, names[i])) : PT))
       res[i] = true;
     else
       res[i] = false;
