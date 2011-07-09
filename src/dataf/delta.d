@@ -15,7 +15,9 @@ template maybeDelta(T) {
 }
 
 struct Delta(T) {
-  void add(string name, T2)(T2 t) if(is(T2 : maybeDelta!(PropSpecs!(T).typeOf!(name)))) {
+  void add(string name, T2)(T2 t)
+    if (PropSpecs!(T).writeMask[PropSpecs!(T).indexOf!(name)()]
+        && is(T2 : maybeDelta!(PropSpecs!(T).typeOf!(name)))) {
     enum idx = PropSpecs!(T).indexOf!(name)();
     assert(data.length == 0, "multiple changes currently unsupported");
 
@@ -28,17 +30,17 @@ struct Delta(T) {
   }
 
   void apply(ref T elem) {
-    foreach(idx, TF; PropSpecs!(T).Types) {
-      if (mask[idx]) {
-        static if (needsDelta!TF) {
-          (cast(Delta!TF*)data.ptr).apply(__traits(getMember, elem, PropSpecs!(T).names[idx]));
-          data = data[0 .. (Delta!TF).alignof];
-        } else {
-          __traits(getMember, elem, PropSpecs!(T).names[idx]) = *cast(TF*)data.ptr;
-          data = data[0 .. TF.alignof];
+    foreach(idx, TF; PropSpecs!(T).Types)
+      static if (PropSpecs!(T).writeMask[idx])
+        if (mask[idx]) {
+          static if (needsDelta!TF) {
+            (cast(Delta!TF*)data.ptr).apply(__traits(getMember, elem, PropSpecs!(T).names[idx]));
+            data = data[0 .. (Delta!TF).alignof];
+          } else {
+            __traits(getMember, elem, PropSpecs!(T).names[idx]) = *cast(TF*)data.ptr;
+            data = data[0 .. TF.alignof];
+          }
         }
-      }
-    }
   }
 
 private:
