@@ -22,7 +22,7 @@ struct Delta(T) {
     assert(data.length == 0, "multiple changes currently unsupported");
 
     maybeDelta!(PropSpecs!(T).Types[idx]) converted = t;
-    data.length = ((converted.sizeof + converted.alignof - 1) % converted.alignof) * converted.alignof;
+    data.length = converted.sizeof;
     data[0 .. converted.sizeof] = (cast(void*)&converted)[0 .. converted.sizeof];
     if (mask.length <= idx)
       mask.length = idx + 1;
@@ -35,10 +35,10 @@ struct Delta(T) {
         if (mask[idx]) {
           static if (needsDelta!TF) {
             (cast(Delta!TF*)data.ptr).apply(__traits(getMember, elem, PropSpecs!(T).names[idx]));
-            data = data[0 .. (Delta!TF).alignof];
+            data = data[0 .. (Delta!TF).sizeof];
           } else {
             __traits(getMember, elem, PropSpecs!(T).names[idx]) = *cast(TF*)data.ptr;
-            data = data[0 .. TF.alignof];
+            data = data[0 .. TF.sizeof];
           }
         }
   }
