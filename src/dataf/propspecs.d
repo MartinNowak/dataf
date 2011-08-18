@@ -30,7 +30,7 @@ string[] propNames(T)() {
   foreach(name; __traits(allMembers, T)) {
     static if (name != "this") {
       static if (mixin(Format!(q{ is(FunctionTypeOf!(T.%s) FT) }, name)))
-        static if (functionAttributes!(FT) & FA.PROPERTY)
+        static if (functionAttributes!(FT) & FA.property)
           res ~= name;
     }
   }
